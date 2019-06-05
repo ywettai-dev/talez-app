@@ -2,6 +2,8 @@ const express = require('express');
 const ejs = require('ejs');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const encrypt = require('mongoose-encryption');
 const _ = require('lodash');
 const app = express();
 const port = 3000;
@@ -27,10 +29,18 @@ mongoose.connect("mongodb://localhost:27017/talezDB", {
 mongoose.set('useFindAndModify', false);
 
 //setup user schema and user model
-const userSchema = {
+const userSchema = new Schema({
     username: String,
     password: String
-}
+});
+
+//setup secret encryption
+const secret = "Thisisourlittlesecret";
+
+userSchema.plugin(encrypt, {
+    secret: secret,
+    encryptedFields: ['password']
+});
 
 const User = mongoose.model("User", userSchema);
 
