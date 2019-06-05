@@ -1,1 +1,1 @@
-A simple authentication app with nodejs.
+A simple authentication enabled app with nodejs.
