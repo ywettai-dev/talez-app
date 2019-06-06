@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const ejs = require('ejs');
 const bodyParser = require('body-parser');
@@ -35,10 +36,8 @@ const userSchema = new Schema({
 });
 
 //setup secret encryption
-const secret = "Thisisourlittlesecret";
-
 userSchema.plugin(encrypt, {
-    secret: secret,
+    secret: process.env.SECRET,
     encryptedFields: ['password']
 });
 
