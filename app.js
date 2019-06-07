@@ -4,6 +4,8 @@ const ejs = require('ejs');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 const md5 = require('md5');
 const _ = require('lodash');
 const app = express();
@@ -42,6 +44,28 @@ app.get('/', (req, res) => {
     res.render('home');
 });
 
+//register
+app.get('/register', (req, res) => {
+    res.render('register');
+});
+
+app.post('/register', (req, res) => {
+    bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+        const newUser = new User({
+            username: req.body.username,
+            password: hash
+        });
+
+        newUser.save((err) => {
+            if (!err) {
+                res.render('secrets');
+            } else {
+                console.log(err);
+            }
+        });
+    });
+});
+
 //login
 app.get('/login', (req, res) => {
     res.render('login');
@@ -49,7 +73,7 @@ app.get('/login', (req, res) => {
 
 app.post('/login', (req, res) => {
     const username = req.body.username;
-    const password = md5(req.body.password);
+    const password = req.body.password;
 
     User.findOne({
         username: username
@@ -58,33 +82,14 @@ app.post('/login', (req, res) => {
             console.log(err);
         } else {
             if (foundUser) {
-                if (foundUser.password === password) {
-                    res.render('secrets');
-                }
+                bcrypt.compare(password, foundUser.password, (err, result) => {
+                    if (result === true) {
+                        res.render('secrets');
+                    } else {
+                        console.log(err);
+                    }
+                });
             }
-        }
-    });
-});
-
-//register
-app.get('/register', (req, res) => {
-    res.render('register');
-});
-
-app.post('/register', (req, res) => {
-    const username = req.body.username;
-    const password = md5(req.body.password);
-
-    const newUser = new User({
-        username: username,
-        password: password
-    });
-
-    newUser.save((err) => {
-        if (!err) {
-            res.render('secrets');
-        } else {
-            console.log(err);
         }
     });
 });
