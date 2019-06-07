@@ -22,10 +22,9 @@
     "dotenv": "^8.0.0",
     "ejs": "^2.6.1",
     "express": "^4.17.1",
-    "jshint": "^2.10.2",
     "lodash": "^4.17.11",
     "md5": "^2.2.1",
-    "mongoose": "^5.5.12",
+    "mongoose": "^5.5.13",
     "mongoose-encryption": "^2.0.2"
   }
 }
