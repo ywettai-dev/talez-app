@@ -7,6 +7,8 @@ const Schema = mongoose.Schema;
 const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const findOrCreate = require("mongoose-findorcreate");
 const _ = require("lodash");
 const app = express();
 const port = 3000;
@@ -53,10 +55,12 @@ mongoose.set("useCreateIndex", true);
 //setup user schema and user model
 const userSchema = new Schema({
   username: String,
-  password: String
+  password: String,
+  googleId: String
 });
 
 userSchema.plugin(passportLocalMongoose); //passport local mongoose plugin
+userSchema.plugin(findOrCreate); //findorcreate plugin
 
 const User = mongoose.model("User", userSchema);
 
@@ -65,10 +69,38 @@ passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+passport.use(new GoogleStrategy({
+  clientID: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET,
+  callbackURL: "http://localhost:3000/auth/google/talez",
+  userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
+  passReqToCallback: true
+}, (request, accessToekn, refreshToken, profile, done) => {
+  User.findOrCreate({
+    googleId: profile.id
+  }, (err, user) => {
+    return done(err, user);
+  });
+}));
+
 //home
 app.get("/", (req, res) => {
   res.render("home");
 });
+
+//google auth
+app.get("/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile"]
+  }));
+
+app.get("/auth/google/talez",
+  passport.authenticate("google", {
+    failureRedirect: "/login"
+  }), (req, res) => {
+    res.redirect("/secrets");
+  }
+);
 
 //secrets
 app.get("/secrets", (req, res) => {
@@ -85,8 +117,9 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  User.register(
-    { username: req.body.username },
+  User.register({
+      username: req.body.username
+    },
     req.body.password,
     (err, user) => {
       if (err) {
