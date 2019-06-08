@@ -7,7 +7,8 @@ const Schema = mongoose.Schema;
 const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const FacebookStrategy = require("passport-facebook").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
 const _ = require("lodash");
 const app = express();
@@ -56,7 +57,8 @@ mongoose.set("useCreateIndex", true);
 const userSchema = new Schema({
   username: String,
   password: String,
-  googleId: String
+  googleId: String,
+  facebookId: String
 });
 
 userSchema.plugin(passportLocalMongoose); //passport local mongoose plugin
@@ -66,12 +68,20 @@ const User = mongoose.model("User", userSchema);
 
 passport.use(User.createStrategy());
 
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+passport.serializeUser(function (user, done) {
+  done(null, user.id);
+});
 
+passport.deserializeUser(function (id, done) {
+  User.findById(id, function (err, user) {
+    done(err, user);
+  });
+});
+
+//GoogleStrategy
 passport.use(new GoogleStrategy({
-  clientID: process.env.CLIENT_ID,
-  clientSecret: process.env.CLIENT_SECRET,
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: "http://localhost:3000/auth/google/talez",
   userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
   passReqToCallback: true
@@ -80,6 +90,19 @@ passport.use(new GoogleStrategy({
     googleId: profile.id
   }, (err, user) => {
     return done(err, user);
+  });
+}));
+
+//FacebookStrategy
+passport.use(new FacebookStrategy({
+  clientID: process.env.FACEBOOK_APP_ID,
+  clientSecret: process.env.FACEBOOK_APP_SECRET,
+  callbackURL: "http://localhost:3000/auth/facebook/talez"
+}, (accessToekn, refreshToken, profile, cb) => {
+  User.findOrCreate({
+    facebookId: profile.id
+  }, (err, user) => {
+    return cb(err, user);
   });
 }));
 
@@ -96,6 +119,20 @@ app.get("/auth/google",
 
 app.get("/auth/google/talez",
   passport.authenticate("google", {
+    failureRedirect: "/login"
+  }), (req, res) => {
+    res.redirect("/secrets");
+  }
+);
+
+//facebook auth
+app.get("/auth/facebook",
+  passport.authenticate("facebook", {
+    scope: ["profile"]
+  }));
+
+app.get("/auth/facebook/talez",
+  passport.authenticate("facebook", {
     failureRedirect: "/login"
   }), (req, res) => {
     res.redirect("/secrets");
