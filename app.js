@@ -127,9 +127,7 @@ app.get("/auth/google/talez",
 
 //facebook auth
 app.get("/auth/facebook",
-  passport.authenticate("facebook", {
-    scope: ["profile"]
-  }));
+  passport.authenticate("facebook"));
 
 app.get("/auth/facebook/talez",
   passport.authenticate("facebook", {
