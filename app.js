@@ -69,28 +69,26 @@ const User = mongoose.model("User", userSchema);
 
 passport.use(User.createStrategy());
 
-passport.serializeUser(function(user, done) {
+passport.serializeUser(function (user, done) {
   done(null, user.id);
 });
 
-passport.deserializeUser(function(id, done) {
-  User.findById(id, function(err, user) {
+passport.deserializeUser(function (id, done) {
+  User.findById(id, function (err, user) {
     done(err, user);
   });
 });
 
 //GoogleStrategy
 passport.use(
-  new GoogleStrategy(
-    {
+  new GoogleStrategy({
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: "http://localhost:3000/auth/google/talez",
       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
     },
     (request, accessToekn, refreshToken, profile, done) => {
-      User.findOrCreate(
-        {
+      User.findOrCreate({
           googleId: profile.id
         },
         (err, user) => {
@@ -103,15 +101,13 @@ passport.use(
 
 //FacebookStrategy
 passport.use(
-  new FacebookStrategy(
-    {
+  new FacebookStrategy({
       clientID: process.env.FACEBOOK_APP_ID,
       clientSecret: process.env.FACEBOOK_APP_SECRET,
       callbackURL: "http://localhost:3000/auth/facebook/talez"
     },
     (accessToekn, refreshToken, profile, cb) => {
-      User.findOrCreate(
-        {
+      User.findOrCreate({
           facebookId: profile.id
         },
         (err, user) => {
@@ -160,8 +156,7 @@ app.get(
 
 //secrets
 app.get("/secrets", (req, res) => {
-  User.find(
-    {
+  User.find({
       secret: {
         $ne: null
       }
@@ -186,8 +181,7 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  User.register(
-    {
+  User.register({
       username: req.body.username
     },
     req.body.password,
